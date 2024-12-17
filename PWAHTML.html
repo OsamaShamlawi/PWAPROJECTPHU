@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Web Music Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            position: relative;
+        }
+        .container {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        button {
+            background-color: #1DB954;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        .controls button, .controls input[type=range] {
+            margin: 5px;
+        }
+        input[type="range"] {
+            width: 300px;
+        }
+        .light-theme {
+            background-color: #f0f0f0;
+            color: black;
+        }
+        .light-theme .container {
+            background-color: #ffffff;
+        }
+        .light-theme button {
+            background-color: #007bff;
+            color: white;
+        }
+        .top-right {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <button class="top-right" onclick="toggleTheme()">Toggle Theme</button>
+    <div id="music-player" class="container">
+        <h1>Music Player</h1>
+        <div class="player">
+            <p id="song-title">No song playing</p>
+            <audio id="audio" controls></audio>
+            <input type="range" id="volume" min="0" max="1" step="0.1">
+            <div class="controls">
+                <button onclick="playNext()">Next</button>
+                <button onclick="toggleShuffle()">Shuffle</button>
+                <button onclick="toggleRepeat()">Repeat</button>
+            </div>
+            <div class="playlist">
+                <button onclick="playSong(0)">Song 1</button>
+                <button onclick="playSong(1)">Song 2</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const songs = ['song1.mp3', 'song2.mp3'];
+        const titles = ['Song 1', 'Song 2'];
+        let currentIndex = 0;
+        let isShuffle = false;
+        let isRepeat = false;
+
+        // Music player logic
+        function playSong(index) {
+            const audioElement = document.getElementById('audio');
+            const songTitle = document.getElementById('song-title');
+            currentIndex = index;
+            audio.src = songs[currentIndex];
+            audio.play();
+            songTitle.textContent = titles[currentIndex];
+        }
+
+        function playNext() {
+            if (isShuffle) {
+                currentIndex = Math.floor(Math.random() * songs.length);
+            } else {
+                currentIndex = (currentIndex + 1) % songs.length;
+            }
+            playSong(currentIndex);
+        }
+
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            console.log('Shuffle:', isShuffle);
+        }
+
+        function toggleRepeat() {
+            isRepeat = !isRepeat;
+            const audio = document.getElementById('audio');
+            audio.loop = isRepeat;
+            console.log('Repeat:', isRepeat);
+        }
+
+        const volumeSlider = document.getElementById('volume');
+        volumeSlider.addEventListener('input', () => {
+            audioElement.volume = volumeSlider.value;
+        });
+
+        audioElement.addEventListener('ended', () => {
+            if (!isRepeat) playNext();
+        });
+
+        // Theme toggle logic
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+        }
+
+        // Service worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then((registration) => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch((error) => {
+                    console.error('Service Worker registration failed:', error);
+                });
+        }
+    </script>
+    <div class="upload">
+        <input type="file" id="file-upload" accept="audio/*">
+        <button onclick="uploadSong()">Upload Song</button>
+    </div>
+
+    <script>
+        function uploadSong() {
+            const fileInput = document.getElementById('file-upload');
+            const file = fileInput.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                songs.push(url);
+                titles.push(file.name);
+                console.log('Song uploaded:', file.name);
+            } else {
+                console.log('No file selected');
+            }
+        }
+    </script>
+</body>
+</html>
+<script>
+    function createSongButton(index) {
+        const playlistDiv = document.querySelector('.playlist');
+        const newButton = document.createElement('button');
+        newButton.textContent = titles[index];
+        newButton.onclick = () => playSong(index);
+        playlistDiv.appendChild(newButton);
+    }
+
+    function uploadSong() {
+        const fileInput = document.getElementById('file-upload');
+        const file = fileInput.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            songs.push(url);
+            titles.push(file.name);
+            createSongButton(songs.length - 1);
+            console.log('Song uploaded:', file.name);
+        } else {
+            console.log('No file selected');
+        }
+    }
+</script>
+<div class="change-title">
+    <input type="text" id="new-title" placeholder="Enter new song title">
+    <button onclick="changeSongTitle()">Change Title</button>
+</div>
+
+<script>
+    function changeSongTitle() {
+        const newTitleInput = document.getElementById('new-title');
+        const newTitle = newTitleInput.value;
+        if (newTitle && currentIndex >= 0 && currentIndex < titles.length) {
+            titles[currentIndex] = newTitle;
+            document.getElementById('song-title').textContent = newTitle;
+            document.querySelectorAll('.playlist button')[currentIndex].textContent = newTitle;
+            console.log('Song title changed to:', newTitle);
+        } else {
+            console.log('Invalid title or song index');
+        }
+    }
+</script>
+<h5>by osama shamlawi</h5>
