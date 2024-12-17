@@ -78,10 +78,7 @@
                 <button onclick="toggleShuffle()">Shuffle</button>
                 <button onclick="toggleRepeat()">Repeat</button>
             </div>
-            <div class="playlist">
-                <button onclick="playSong(0)">Song 1</button>
-                <button onclick="playSong(1)">Song 2</button>
-            </div>
+            <div class="playlist"></div>
         </div>
     </div>
 
@@ -161,54 +158,63 @@
                 const url = URL.createObjectURL(file);
                 songs.push(url);
                 titles.push(file.name);
+                createSongButton(songs.length - 1);
                 console.log('Song uploaded:', file.name);
             } else {
                 console.log('No file selected');
             }
         }
+
+        function createSongButton(index) {
+            const playlistDiv = document.querySelector('.playlist');
+            const newButton = document.createElement('button');
+            newButton.textContent = titles[index];
+            newButton.onclick = () => playSong(index);
+
+            const deleteIcon = document.createElement('span');
+            deleteIcon.textContent = ' X';
+            deleteIcon.style.color = 'red';
+            deleteIcon.style.cursor = 'pointer';
+            deleteIcon.onclick = (event) => {
+                event.stopPropagation();
+                deleteSong(index);
+            };
+
+            newButton.appendChild(deleteIcon);
+            playlistDiv.appendChild(newButton);
+        }
     </script>
+    <div class="change-title">
+        <input type="text" id="new-title" placeholder="Enter new song title">
+        <button onclick="changeSongTitle()">Change Title</button>
+    </div>
+
+    <script>
+        function changeSongTitle() {
+            const newTitleInput = document.getElementById('new-title');
+            const newTitle = newTitleInput.value;
+            if (newTitle && currentIndex >= 0 && currentIndex < titles.length) {
+                titles[currentIndex] = newTitle;
+                document.getElementById('song-title').textContent = newTitle;
+                document.querySelectorAll('.playlist button')[currentIndex].textContent = newTitle;
+                console.log('Song title changed to:', newTitle);
+            } else {
+                console.log('Invalid title or song index');
+            }
+        }
+
+        function deleteSong(index) {
+            if (index >= 0 && index < songs.length) {
+                songs.splice(index, 1);
+                titles.splice(index, 1);
+                const playlistDiv = document.querySelector('.playlist');
+                playlistDiv.removeChild(playlistDiv.children[index]);
+                console.log('Song deleted:', index);
+            } else {
+                console.log('Invalid song index');
+            }
+        }
+    </script>
+    <h5>by osama shamlawi</h5>
 </body>
 </html>
-<script>
-    function createSongButton(index) {
-        const playlistDiv = document.querySelector('.playlist');
-        const newButton = document.createElement('button');
-        newButton.textContent = titles[index];
-        newButton.onclick = () => playSong(index);
-        playlistDiv.appendChild(newButton);
-    }
-
-    function uploadSong() {
-        const fileInput = document.getElementById('file-upload');
-        const file = fileInput.files[0];
-        if (file) {
-            const url = URL.createObjectURL(file);
-            songs.push(url);
-            titles.push(file.name);
-            createSongButton(songs.length - 1);
-            console.log('Song uploaded:', file.name);
-        } else {
-            console.log('No file selected');
-        }
-    }
-</script>
-<div class="change-title">
-    <input type="text" id="new-title" placeholder="Enter new song title">
-    <button onclick="changeSongTitle()">Change Title</button>
-</div>
-
-<script>
-    function changeSongTitle() {
-        const newTitleInput = document.getElementById('new-title');
-        const newTitle = newTitleInput.value;
-        if (newTitle && currentIndex >= 0 && currentIndex < titles.length) {
-            titles[currentIndex] = newTitle;
-            document.getElementById('song-title').textContent = newTitle;
-            document.querySelectorAll('.playlist button')[currentIndex].textContent = newTitle;
-            console.log('Song title changed to:', newTitle);
-        } else {
-            console.log('Invalid title or song index');
-        }
-    }
-</script>
-<h5>by osama shamlawi</h5>
